@@ -5,15 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Political Atlas - Data Visualization</title>
     <style>
-        /* Inefficient CSS - causes multiple reflows */
+        /* Optimized CSS - uses efficient selectors and GPU acceleration */
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
         }
         
         .container {
-            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
         }
         
@@ -22,29 +28,57 @@
             color: white;
             padding: 20px;
             text-align: center;
+            /* Use transform for better performance */
+            will-change: transform;
         }
         
         .card {
             border: 1px solid #ddd;
             padding: 15px;
-            margin: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            /* Use transform instead of box-shadow for animations */
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+            /* Enable GPU acceleration */
+            transform: translateZ(0);
+        }
+        
+        .card:hover {
+            transform: translateY(-2px) translateZ(0);
         }
         
         .data-list {
             list-style: none;
             padding: 0;
+            margin: 0;
         }
         
         .data-item {
             padding: 10px;
             border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        
+        .data-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .data-item:last-child {
+            border-bottom: none;
         }
         
         .chart-container {
             width: 100%;
             height: 400px;
             margin: 20px 0;
+        }
+        
+        /* Optimize for rendering performance */
+        .data-item,
+        .card {
+            contain: layout style paint;
         }
     </style>
 </head>
@@ -71,81 +105,75 @@
     </div>
     
     <script>
-        // Inefficient code examples that need optimization
+        // OPTIMIZED CODE - Performance improvements applied
         
-        // Issue 1: Using innerHTML in a loop (causes multiple DOM reflows)
+        // FIX 1: Use DocumentFragment to batch DOM updates (single reflow)
         function loadElectionResults() {
             var resultsDiv = document.getElementById('results');
             var data = generateElectionData(100);
             
+            // Create a document fragment to batch all DOM operations
+            var fragment = document.createDocumentFragment();
             for (var i = 0; i < data.length; i++) {
-                resultsDiv.innerHTML += '<div class="data-item">' + 
-                    data[i].candidate + ': ' + data[i].votes + ' votes</div>';
+                var div = document.createElement('div');
+                div.className = 'data-item';
+                div.textContent = data[i].candidate + ': ' + data[i].votes + ' votes';
+                fragment.appendChild(div);
             }
+            // Single DOM update instead of multiple
+            resultsDiv.appendChild(fragment);
         }
         
-        // Issue 2: Inefficient data generation with nested loops
+        // FIX 2: Remove nested loop - calculate votes directly (O(n) instead of O(n²))
         function generateElectionData(count) {
             var data = [];
             for (var i = 0; i < count; i++) {
                 var candidate = 'Candidate ' + i;
-                var votes = 0;
-                // Inefficient: O(n) operation for each item
-                for (var j = 0; j < 1000; j++) {
-                    votes += Math.floor(Math.random() * 100);
-                }
+                // Direct calculation instead of nested loop
+                var votes = Math.floor(Math.random() * 100000);
                 data.push({candidate: candidate, votes: votes});
             }
             return data;
         }
         
-        // Issue 3: No event delegation - attaching listeners to each item
+        // FIX 3: Use event delegation - single listener on parent element
         function loadHistoricalData() {
             var listEl = document.getElementById('data-list');
-            var years = [];
-            for (var y = 2000; y <= 2024; y++) {
-                years.push(y);
-            }
+            var fragment = document.createDocumentFragment();
             
-            for (var i = 0; i < years.length; i++) {
+            for (var y = 2000; y <= 2024; y++) {
                 var li = document.createElement('li');
                 li.className = 'data-item';
-                li.textContent = 'Year ' + years[i] + ' - Click for details';
-                
-                // Inefficient: Individual event listener for each item
-                li.onclick = function(year) {
-                    return function() {
-                        alert('Showing data for ' + year);
-                    };
-                }(years[i]);
-                
-                listEl.appendChild(li);
+                li.textContent = 'Year ' + y + ' - Click for details';
+                li.setAttribute('data-year', y);
+                fragment.appendChild(li);
             }
+            listEl.appendChild(fragment);
+            
+            // Single event listener using delegation
+            listEl.addEventListener('click', function(e) {
+                if (e.target.classList.contains('data-item')) {
+                    var year = e.target.getAttribute('data-year');
+                    alert('Showing data for ' + year);
+                }
+            });
         }
         
-        // Issue 4: Inefficient array operations
+        // FIX 4: Single pass through array to calculate all statistics
         function calculateStats() {
             var statsDiv = document.getElementById('stats');
             var data = generateElectionData(50);
             
-            // Inefficient: Multiple passes through the array
+            // Calculate all stats in a single loop
             var totalVotes = 0;
-            for (var i = 0; i < data.length; i++) {
-                totalVotes += data[i].votes;
-            }
-            
-            var maxVotes = 0;
-            for (var i = 0; i < data.length; i++) {
-                if (data[i].votes > maxVotes) {
-                    maxVotes = data[i].votes;
-                }
-            }
-            
+            var maxVotes = -Infinity;
             var minVotes = Infinity;
+            
             for (var i = 0; i < data.length; i++) {
-                if (data[i].votes < minVotes) {
-                    minVotes = data[i].votes;
-                }
+                var votes = data[i].votes;
+                totalVotes += votes;
+                if (votes > maxVotes) maxVotes = votes;
+                if (votes < minVotes) minVotes = votes;
             }
             
             var avgVotes = totalVotes / data.length;
@@ -156,19 +184,36 @@
                 '<p>Min Votes: ' + minVotes + '</p>';
         }
         
-        // Issue 5: Synchronous operations blocking the UI
-        // All functions called synchronously on load
+        // FIX 5: Use requestAnimationFrame for non-blocking UI updates
         window.onload = function() {
-            loadElectionResults();
-            loadHistoricalData();
-            calculateStats();
+            // Stagger loading to avoid blocking UI
+            requestAnimationFrame(function() {
+                loadElectionResults();
+                requestAnimationFrame(function() {
+                    loadHistoricalData();
+                    requestAnimationFrame(function() {
+                        calculateStats();
+                    });
+                });
+            });
         };
         
-        // Issue 6: No debouncing for resize events
-        window.onresize = function() {
-            // This will fire many times during resize
+        // FIX 6: Debounce resize events to prevent excessive recalculations
+        function debounce(func, wait) {
+            var timeout;
+            return function() {
+                var context = this;
+                var args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    func.apply(context, args);
+                }, wait);
+            };
+        }
+        
+        window.onresize = debounce(function() {
             calculateStats();
-        };
+        }, 250); // Only recalculate after 250ms of no resize activity
     </script>
 </body>
 </html>
