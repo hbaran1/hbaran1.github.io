@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Political Atlas - Data Visualization</title>
+    <style>
+        /* Inefficient CSS - causes multiple reflows */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .data-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .data-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Political Atlas - Election Data Visualization</h1>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Election Results</h2>
+            <div id="results"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Historical Data</h2>
+            <ul class="data-list" id="data-list"></ul>
+        </div>
+        
+        <div class="card">
+            <h2>Statistics</h2>
+            <div id="stats"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Inefficient code examples that need optimization
+        
+        // Issue 1: Using innerHTML in a loop (causes multiple DOM reflows)
+        function loadElectionResults() {
+            var resultsDiv = document.getElementById('results');
+            var data = generateElectionData(100);
+            
+            for (var i = 0; i < data.length; i++) {
+                resultsDiv.innerHTML += '<div class="data-item">' + 
+                    data[i].candidate + ': ' + data[i].votes + ' votes</div>';
+            }
+        }
+        
+        // Issue 2: Inefficient data generation with nested loops
+        function generateElectionData(count) {
+            var data = [];
+            for (var i = 0; i < count; i++) {
+                var candidate = 'Candidate ' + i;
+                var votes = 0;
+                // Inefficient: O(n) operation for each item
+                for (var j = 0; j < 1000; j++) {
+                    votes += Math.floor(Math.random() * 100);
+                }
+                data.push({candidate: candidate, votes: votes});
+            }
+            return data;
+        }
+        
+        // Issue 3: No event delegation - attaching listeners to each item
+        function loadHistoricalData() {
+            var listEl = document.getElementById('data-list');
+            var years = [];
+            for (var y = 2000; y <= 2024; y++) {
+                years.push(y);
+            }
+            
+            for (var i = 0; i < years.length; i++) {
+                var li = document.createElement('li');
+                li.className = 'data-item';
+                li.textContent = 'Year ' + years[i] + ' - Click for details';
+                
+                // Inefficient: Individual event listener for each item
+                li.onclick = function(year) {
+                    return function() {
+                        alert('Showing data for ' + year);
+                    };
+                }(years[i]);
+                
+                listEl.appendChild(li);
+            }
+        }
+        
+        // Issue 4: Inefficient array operations
+        function calculateStats() {
+            var statsDiv = document.getElementById('stats');
+            var data = generateElectionData(50);
+            
+            // Inefficient: Multiple passes through the array
+            var totalVotes = 0;
+            for (var i = 0; i < data.length; i++) {
+                totalVotes += data[i].votes;
+            }
+            
+            var maxVotes = 0;
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].votes > maxVotes) {
+                    maxVotes = data[i].votes;
+                }
+            }
+            
+            var minVotes = Infinity;
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].votes < minVotes) {
+                    minVotes = data[i].votes;
+                }
+            }
+            
+            var avgVotes = totalVotes / data.length;
+            
+            statsDiv.innerHTML = '<p>Total Votes: ' + totalVotes + '</p>' +
+                '<p>Average Votes: ' + avgVotes.toFixed(2) + '</p>' +
+                '<p>Max Votes: ' + maxVotes + '</p>' +
+                '<p>Min Votes: ' + minVotes + '</p>';
+        }
+        
+        // Issue 5: Synchronous operations blocking the UI
+        // All functions called synchronously on load
+        window.onload = function() {
+            loadElectionResults();
+            loadHistoricalData();
+            calculateStats();
+        };
+        
+        // Issue 6: No debouncing for resize events
+        window.onresize = function() {
+            // This will fire many times during resize
+            calculateStats();
+        };
+    </script>
+</body>
+</html>
