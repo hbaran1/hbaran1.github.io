@@ -188,9 +188,11 @@ window.onresize = function() {
 function debounce(func, wait) {
     var timeout;
     return function() {
+        var context = this;
+        var args = arguments;
         clearTimeout(timeout);
         timeout = setTimeout(function() {
-            func.apply(this, arguments);
+            func.apply(context, args);
         }, wait);
     };
 }
